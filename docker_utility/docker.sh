@@ -17,12 +17,17 @@ sudo docker run -it --privileged -p="8888:8888" -p "6006:6006" -v=${WS_LOCATION}
 echo "Container terminated!"
 
 ## Detect latest container of target image
-sudo docker ps -a >> image_history.txt
+export LATEST_IMAGE=sudo docker ps -l --format "{{.Image}}"
+if [ ${LATEST_IMAGE} == ${TARGET_IMAGE} ] ; then
+	export IMAGE=${LATEST_IMAGE}
+	export LAST_ID=sudo docker ps -l -q
+else
+	sudo docker ps -a >> image_history.txt
+	export IMAGE=$(awk -v selected_image=${TARGET_IMAGE} '$2 == selected_image {print $2;exit}' image_history.txt)
+	export LAST_ID=$(awk -v selected_image=${TARGET_IMAGE} '$2 == selected_image {print $1;exit}' image_history.txt)
+	rm image_history.txt
+fi
 
-export IMAGE=$(awk -v selected_image=${TARGET_IMAGE} '$2 == selected_image {print $2;exit}' image_history.txt)
-export LAST_ID=$(awk -v selected_image=${TARGET_IMAGE} '$2 == selected_image {print $1;exit}' image_history.txt)
-
-rm image_history.txt
 echo "Latest container detected!!"
 
 ## Auto commit the detected container
